@@ -51,13 +51,25 @@ module Immigrant
       end
 
       def tables
-        @tables ||= ActiveRecord::Base.connection.tables
+        @tables ||= with_connection(&:tables)
       end
 
       def current_foreign_keys
-        tables.map{ |table|
-          ActiveRecord::Base.connection.foreign_keys(table)
-        }.flatten
+        with_connection do |connection|
+          tables.map{ |table|
+            connection.foreign_keys(table)
+          }.flatten
+        end
+      end
+
+      def with_connection
+        if ActiveRecord::Base.respond_to?(:with_connection)
+          ActiveRecord::Base.with_connection do |connection|
+            yield connection
+          end
+        else
+          yield ActiveRecord::Base.connection
+        end
       end
 
       def model_classes

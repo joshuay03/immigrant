@@ -26,7 +26,11 @@ module Immigrant
     end
 
     def connection
-      @connection ||= ActiveRecord::Base.connection
+      @connection ||= if ActiveRecord::Base.respond_to?(:lease_connection)
+        ActiveRecord::Base.lease_connection
+      else
+        ActiveRecord::Base.connection
+      end
     end
   end
 end
